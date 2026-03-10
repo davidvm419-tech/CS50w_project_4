@@ -1,0 +1,32 @@
+New Post
+Signed in users should be able to write a new text-based post. Clicking a button to submit.
+The New post can be in the same 'All Posts' view or as a 'New Post' separate page.
+
+All Posts
+Te link should take the user to a page where all the posts from all users can be seen ordered from newest to oldest.
+    Each post must have username, post content, creation date, likes initially 0.
+
+Profile Page 
+Clicking a username should load that specific user Profile. 
+    User followers must be displayed as well as number of people user follows.
+    Display all posts newest to oldest.
+    If the user is signed in and is not the user itself show a follow or Unfollow button.
+
+Following
+Take the user to a page where they see all posts made by the users he/she follows.
+    Same behaviour as the 'All Posts' page .
+    Avaliable only to signed in users.
+
+Pagination
+Any page that displays post should show only 10 posts. To se more  'Next; button should appear.
+    if the user is not in the first page a 'Previous' button should also appear.
+
+Edit Post
+User who owns a post must be able to Click an 'Edit' button.
+    Content must be replace with a textarea where the content can be edited.
+    'Save' the post without reloading the page.
+    Security to guarantee that only the owner can edit the post
+
+Like and Unlike
+Click a button o link to togled a 'like' or 'liked'
+The like count must be updated without requiring to reload the page.
