@@ -1,10 +1,10 @@
 New Post
-Signed in users should be able to write a new text-based post. Clicking a button to submit.
-The New post can be in the same 'All Posts' view or as a 'New Post' separate page.
+Signed in users should be able to write a new text-based post. Clicking a button to submit. (Done)
+The New post can be in the same 'All Posts' view or as a 'New Post' separate page. (Done)
 
 All Posts
-Te link should take the user to a page where all the posts from all users can be seen ordered from newest to oldest.
-    Each post must have username, post content, creation date, likes initially 0.
+The link should take the user to a page where all the posts from all users can be seen ordered from newest to oldest. (Done)
+    Each post must have username, post content, creation date, likes initially 0. (Done)
 
 Profile Page 
 Clicking a username should load that specific user Profile. 
