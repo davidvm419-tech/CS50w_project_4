@@ -27,13 +27,54 @@ def user_posts(request, user_id):
     user_followers = Follow.objects.filter(following=user_id).count() 
     user_following = Follow.objects.filter(follower=user_id).count()
 
+    # Check if login user follow this user
+    login_user = request.user.id 
+    if request.user.is_authenticated:
+        is_following = Follow.objects.filter(follower=login_user, following=user_id).exists()
+    else:
+        is_following = False
+
     # return user posts, followers and login user (for following button) 
     return JsonResponse({
         "posts":[post.serialize() for post in user_posts],
         "followers": user_followers,
         "following": user_following,
-        "log_in_user": request.user.id,  
+        "login_user": login_user,
+        "is_following": is_following, 
         },
+        status=200)
+
+@login_required 
+def follow_handle(request, user_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Wrong method, please use POST"}, status=400)
+    
+    # Get data
+    try:
+        data =json.loads(request.body)
+    except:
+        return JsonResponse({"error": "Error sending data, JSON data invalid"}, status=400)
+    is_follow = data.get("is_follow", "")
+
+    # Check status of following to update database
+    if is_follow:
+        Follow.objects.filter(follower_id=request.user.id, following_id=user_id).delete()
+        is_follow = False
+    else:
+        # Get or create avoids duplicades most safe
+        Follow.objects.get_or_create(follower_id=request.user.id, following_id=user_id) 
+        is_follow = True
+
+    # Get updated values
+    user_followers = Follow.objects.filter(following=user_id).count() 
+    user_following = Follow.objects.filter(follower=user_id).count()
+
+    # Return response
+    return JsonResponse({
+        "followers": user_followers,
+        "following": user_following,
+        "is_following": is_follow,   
+        }, 
         status=200)
 
 

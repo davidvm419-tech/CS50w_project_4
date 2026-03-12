@@ -1,16 +1,21 @@
 document.addEventListener("DOMContentLoaded", function() {
     
-    // SP views load
     const postView = document.querySelector("#form-submit")
-    document.querySelector("#user-view").style.display = "none"
+    alert("REMEMBER TO HIDE THE FOLLOW BUTTON IF USER IS NOT LOGIN")
+    
 
     // Avoid error rendering the post if the user is not log in
     if (postView) {
+        // SP views load
         postView.addEventListener("click", createPost)   
+        document.querySelector("#user-view").style.display = "none"
     }
 
-    // Load posts
-    loadPosts()
+    // Load posts (avoid error when log out)
+    const posts = document.querySelector("#app-posts")
+    if (posts) {
+        loadPosts()
+    }
 })
 
 function createPost(e) {
@@ -83,7 +88,10 @@ function loadPosts() {
 
 function userProfile(user_id) {
     // Show user view
-    document.querySelector("#create-post-view").style.display = "none"
+    const postView = document.querySelector("#create-post-view");
+    if (postView) {
+        postView.style.display = "none"
+    }
     document.querySelector("#app-posts").style.display = "none"
     document.querySelector("#user-view").style.display = "block"
 
@@ -104,21 +112,32 @@ function userProfile(user_id) {
         // Render usernmae, user followers and the users is following
         const userInfoDiv = document.createElement("div")
         
+        
         // Create elements to the div
         userInfoDiv.className = "user-information"
         const user = document.createElement("h2");
         const userExists = data.posts.length > 0 ? data.posts[0].user : "User hasn't post to display"  
         user.textContent = `Posts by: ${userExists}`
         const followers = document.createElement("p");
+        followers.id = "user-followers"
         followers.textContent = `Followers: ${data.followers}`
         const following = document.createElement("p");
-        following.textContent = `User follows: #${data.following}`
+        following.id = "user-follows"
+        following.textContent = `User follows: ${data.following}`
         userInfoDiv.append(user, followers, following)
-        document.querySelector("#user-view").append(userInfoDiv)
 
         // Check for display follow button
-        // Check if user already follows this user
+        const userId = data.posts.length > 0 ? data.posts[0].user_id : user_id;
 
+        if (data.login_user === userId){
+            document.querySelector("#user-view").append(userInfoDiv)
+        } else {
+            const followButton = document.createElement("button");
+            followButton.id = "follow-btn"
+            followButton.textContent = data.is_following ? "Unfollow" : "Follow"
+            document.querySelector("#user-view").append(userInfoDiv, followButton)
+            followButton.onclick = () => followHandle(userId, data.is_following)
+        }
 
         // Render user posts
         data.posts.forEach(item => {
@@ -141,4 +160,31 @@ function userProfile(user_id) {
         })
     })
     .catch(error => alert(`error: ${error}`))
+}
+
+function followHandle(user_id, follow_status) {
+    // Send data to back end
+    fetch(`/network/follow/${user_id}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": Cookies.get("csrftoken")
+        },
+        body: JSON.stringify({
+            is_follow: follow_status,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Update followers numbers
+        document.querySelector("#user-followers").textContent = `Followers: ${data.followers}`
+        document.querySelector("#user-follows").textContent = `User follows: ${data.following}`
+        
+        // Update follow button
+        const button = document.querySelector("#follow-btn");
+        button.textContent = data.is_following ? "Unfollow" : "Follow"
+
+        // Update button handling
+        button.onclick = () => followHandle(user_id, data.is_following)
+    }) 
 }

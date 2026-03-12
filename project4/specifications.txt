@@ -10,7 +10,7 @@ Profile Page
 Clicking a username should load that specific user Profile. (Done)
     User followers must be displayed as well as number of people user follows. (Done)
     Display all posts newest to oldest. (Done)
-    If the user is signed in and is not the user itself show a follow or Unfollow button.
+    If the user is signed in and is not the user itself show a follow or Unfollow button. (Done)
 
 Following
 Take the user to a page where they see all posts made by the users he/she follows.
