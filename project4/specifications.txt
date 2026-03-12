@@ -7,9 +7,9 @@ The link should take the user to a page where all the posts from all users can b
     Each post must have username, post content, creation date, likes initially 0. (Done)
 
 Profile Page 
-Clicking a username should load that specific user Profile. 
-    User followers must be displayed as well as number of people user follows.
-    Display all posts newest to oldest.
+Clicking a username should load that specific user Profile. (Done)
+    User followers must be displayed as well as number of people user follows. (Done)
+    Display all posts newest to oldest. (Done)
     If the user is signed in and is not the user itself show a follow or Unfollow button.
 
 Following

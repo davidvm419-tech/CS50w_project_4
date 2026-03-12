@@ -15,9 +15,26 @@ def index(request):
     return render(request, "network/index.html")
 
 def posts(request):
-    posts =Post.objects.all()
-    posts = posts.order_by("-timestamp")
+    posts =Post.objects.all().order_by("-timestamp")
     return JsonResponse([post.serialize() for post in posts], safe=False)
+
+
+def user_posts(request, user_id):
+    # Get user and user posts
+    user_posts = Post.objects.filter(user=user_id).order_by("-timestamp")
+
+    # Get user followers and following 
+    user_followers = Follow.objects.filter(following=user_id).count() 
+    user_following = Follow.objects.filter(follower=user_id).count()
+
+    # return user posts, followers and login user (for following button) 
+    return JsonResponse({
+        "posts":[post.serialize() for post in user_posts],
+        "followers": user_followers,
+        "following": user_following,
+        "log_in_user": request.user.id,  
+        },
+        status=200)
 
 
 @login_required
@@ -44,9 +61,10 @@ def create_post(request):
     post.save()
 
     # return response of success and the post to update the posts
-    return JsonResponse({"message": "Post published", 
-                         "post": post.serialize()}, 
-                         status=200)
+    return JsonResponse({
+        "message": "Post published", 
+        "post": post.serialize()}, 
+        status=200)
 
 
 

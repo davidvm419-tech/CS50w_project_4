@@ -14,9 +14,10 @@ class Post(models.Model):
     def serialize(self):
         return {
             "id": self.id,
+            "user_id": self.user.id,
             "user": self.user.username,
             "content": self.content,
-            "timestamp": self.timestamp.strftime("posted at: %Y-%m-%d %H:%M"),
+            "timestamp": self.timestamp.strftime("posted at: %d-%m-%Y"),
         }
 
 
