@@ -11,13 +11,15 @@ class Post(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    def serialize(self):
+    def serialize(self, user=None):
         return {
             "id": self.id,
             "user_id": self.user.id,
             "user": self.user.username,
             "content": self.content,
             "timestamp": self.timestamp.strftime("posted at: %d-%m-%Y"),
+            "likes": self.likes.count(),
+            "is_liked": self.likes.filter(user=user).exists() if user else False   
         }
 
 

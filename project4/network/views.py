@@ -16,7 +16,17 @@ def index(request):
 
 def posts(request):
     posts =Post.objects.all().order_by("-timestamp")
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    if request.user.is_authenticated:
+        login_user = request.user.id
+        user = request.user
+    else:
+        login_user = None
+        user= None
+    return JsonResponse({
+        "posts": [post.serialize(user=user) for post in posts],
+        "login_user": login_user,
+        },
+        status=200)
 
 
 def user_posts(request, user_id):
@@ -31,12 +41,14 @@ def user_posts(request, user_id):
     login_user = request.user.id 
     if request.user.is_authenticated:
         is_following = Follow.objects.filter(follower=login_user, following=user_id).exists()
+        user = request.user
     else:
         is_following = False
+        user = None
 
     # return user posts, followers and login user (for following button) 
     return JsonResponse({
-        "posts":[post.serialize() for post in user_posts],
+        "posts": [post.serialize(user=user) for post in user_posts],
         "followers": user_followers,
         "following": user_following,
         "login_user": login_user,
@@ -66,21 +78,49 @@ def follow_handle(request, user_id):
         is_follow = True
 
     # Get updated values
-    user_followers = Follow.objects.filter(following=user_id).count() 
-    user_following = Follow.objects.filter(follower=user_id).count()
-
+    user_followers = Follow.objects.filter(following_id=user_id).count() 
+    user_following = Follow.objects.filter(follower_id=user_id).count()
+    user = User.objects.get(pk=user_id)
+    username = user.username
     # Return response
     return JsonResponse({
         "followers": user_followers,
         "following": user_following,
-        "is_following": is_follow,   
+        "is_following": is_follow,  
+        "user": username 
         }, 
         status=200)
 
 
 @login_required
 def like_handle(request, post_id):
-    ...
+    if request.method != "POST":
+        return JsonResponse({"error": "Wrong method, please use POST"}, status=400)
+    
+    # Get data
+    try:
+        data = json.loads(request.body)
+    except:
+        return JsonResponse({"error": "Error sending data, JSON data invalid"}, status=400)
+    is_liked = data.get("is_liked", "")
+
+    # Update database
+    if is_liked:
+        Like.objects.filter(post_id=post_id, user_id=request.user.id).delete()
+        is_liked = False
+    else:
+        Like.objects.get_or_create(post_id=post_id, user_id=request.user.id)
+        is_liked = True
+
+    # Get new likes value
+    post_likes = Like.objects.filter(post=post_id).count()   
+
+    # Return response
+    return JsonResponse({
+        "likes": post_likes,
+        "is_liked": is_liked,    
+    },
+    status=200)
 
 
 @login_required
@@ -92,7 +132,7 @@ def following_posts(request, user_id):
     posts = Post.objects.filter(user_id__in=following_users).order_by("-timestamp")
 
     # Return response
-    return JsonResponse([post.serialize() for post in posts], safe=False, status=200)
+    return JsonResponse([post.serialize(user=request.user) for post in posts], safe=False, status=200)
 
 
 @login_required
@@ -121,7 +161,7 @@ def create_post(request):
     # return response of success and the post to update the posts
     return JsonResponse({
         "message": "Post published", 
-        "post": post.serialize()}, 
+        "post": post.serialize(user=request.user)}, 
         status=200)
 
 
