@@ -14,4 +14,6 @@ urlpatterns = [
     path("network/<int:user_id>", views.user_posts, name="user_posts"),
     path("network/create_post", views.create_post, name="create_post"),
     path("network/follow/<int:user_id>", views.follow_handle, name="follow_handle"),
+    path("network/likes/<int:post_id>", views.like_handle, name="like_handle"),
+    path("network/following/<int:user_id>", views.following_posts, name="following_posts"),
 ]

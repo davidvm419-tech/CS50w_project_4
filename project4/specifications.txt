@@ -13,9 +13,9 @@ Clicking a username should load that specific user Profile. (Done)
     If the user is signed in and is not the user itself show a follow or Unfollow button. (Done)
 
 Following
-Take the user to a page where they see all posts made by the users he/she follows.
-    Same behaviour as the 'All Posts' page .
-    Avaliable only to signed in users.
+Take the user to a page where they see all posts made by the users he/she follows. (Done)
+    Same behaviour as the 'All Posts' page. (Done)
+    Avaliable only to signed in users. (Done)
 
 Pagination
 Any page that displays post should show only 10 posts. To se more  'Next; button should appear.

@@ -79,6 +79,23 @@ def follow_handle(request, user_id):
 
 
 @login_required
+def like_handle(request, post_id):
+    ...
+
+
+@login_required
+def following_posts(request, user_id):
+    # Get users that the login user is following (flat true returns a flat list of the users ids)
+    following_users = Follow.objects.filter(follower=user_id).values_list("following_id", flat=True)
+    
+    # Get posts of the users that the login user is following (django iterates the list of users id's to get each user posts)
+    posts = Post.objects.filter(user_id__in=following_users).order_by("-timestamp")
+
+    # Return response
+    return JsonResponse([post.serialize() for post in posts], safe=False, status=200)
+
+
+@login_required
 def create_post(request):
     if request.method != "POST":
         return JsonResponse({"error": "Wrong method, please use POST"}, status=400)
