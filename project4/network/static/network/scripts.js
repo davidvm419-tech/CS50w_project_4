@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
         postView.addEventListener("click", createPost)   
         document.querySelector("#user-view").style.display = "none"
         document.querySelector("#following-view").style.display = "none"
+        document.querySelector("#edit-post-view").style.display = "none"
     }
 
     // Load posts (avoid error when log out)
@@ -34,15 +35,76 @@ function createPost(e) {
             content: content,
         })
     })
+
     // Return message of success or failed and add post to the feed
    .then(response => response.json())
    .then(result => {
+    // Clear the content post
+    document.querySelector("#post-text").value = ""
+    // Load all posts view and show alert message
+    document.querySelector("#app-posts").style.display = "block"
+    loadPosts()
     if (result.error) {
-        alert(result.error)
+        alertMessage(result.error, "warning")
     } else {
-        alert(result.message)
+        alertMessage(result.message, "success")
     }
    })
+}
+
+
+function editPost(post_id, post_content) {
+    // Show edit view and hide the others
+    document.querySelector("#create-post-view").style.display = "none"
+    document.querySelector("#app-posts").style.display = "none"
+    document.querySelector("#user-view").style.display = "none"
+    document.querySelector("#following-view").style.display = "none"
+    document.querySelector("#edit-post-view").style.display = "block"
+
+    // Render post data in the form
+    document.querySelector("#edit-text").value = post_content
+    
+    // Handle button submit 
+    const editSubmit = document.querySelector("#edit-form-submit")
+
+    editSubmit.onclick  = (e) => handleEditSubmit(e, post_id)
+}
+
+
+function handleEditSubmit(e, post_id) {
+    // Avoid page reload
+    e.preventDefault()    
+
+    // Get updated content
+    const content = document.querySelector("#edit-text").value
+
+    // Send content to back end
+    fetch(`/network/edit_post/${post_id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": Cookies.get("csrftoken")
+        },
+        body: JSON.stringify({
+            content: content,
+        })
+    })
+
+    // Get response and display message
+    .then(response => response.json())
+    .then(result => {
+        // Load all posts view and show alet message
+        document.querySelector("#edit-post-view").style.display = "none"
+        document.querySelector("#create-post-view").style.display = "block"
+        document.querySelector("#app-posts").style.display = "block"
+        loadPosts()
+
+        if (result.error) {
+            alertMessage(result.error, "warning")
+        } else {
+            alertMessage(result.message, "success")
+        }
+    })
 }
 
 
@@ -84,9 +146,15 @@ function loadPosts() {
             likeButton.id = `like-btn-allposts-${item.id}   `
             postDiv.append(user, heading, content, timestamp, likesNum)
 
-            // Avoid user who owns the post to have the like button
+            // Avoid user who owns the post to have the like button and have the edit button
             if (loginUser === item.user_id) {
-                document.querySelector("#app-posts").append(postDiv)
+                const editButton = document.createElement("button");
+                editButton.id = `edit-btn-allPosts-${item.id}` 
+                editButton.textContent = "Edit Post" 
+                document.querySelector("#app-posts").append(postDiv, editButton)
+
+                // Handle edit button
+                editButton.onclick = () => editPost(item.id, item.content)       
             } else {
                 likeButton.textContent = item.is_liked ? "Unlike" : "Like"
                 document.querySelector("#app-posts").append(postDiv, likeButton)
@@ -101,6 +169,8 @@ function loadPosts() {
             } else {
                 likeButton.onclick = () => likeHandle(item.id, item.is_liked, likesNum, likeButton)    
             }
+
+            // Show ediit button if the use owns the post   
         }) 
     })
     .catch(error => alert(`Error: ${error}`))
@@ -113,6 +183,7 @@ function userProfile(user_id) {
     if (postView) {
         postView.style.display = "none"
         document.querySelector("#following-view").style.display = "none"
+        document.querySelector("#edit-post-view").style.display = "none"
     }
     document.querySelector("#app-posts").style.display = "none"
     document.querySelector("#user-view").style.display = "block"
@@ -190,9 +261,15 @@ function userProfile(user_id) {
             likeButton.id = `like-btn-user ${item.id}`
             userPostDiv.append(heading, content, timestamp, likesNum)
 
-            // Avoid user who owns the post to have the like button
+            // Avoid user who owns the post to have the like button and have the edit button    
             if (loginUser === userProfileId) {
-                document.querySelector("#user-view").append(userPostDiv)    
+                const editButton = document.createElement("button");
+                editButton.id = `edit-btn-userProfile-${item.id}`
+                editButton.textContent = "Edit Post"
+                document.querySelector("#user-view").append(userPostDiv, editButton)
+                
+                // Handle edit button
+                editButton.onclick = () => editPost(item.id, item.content)
             } else {
                 likeButton.textContent = item.is_liked ? "Unlike" : "Like"
                 document.querySelector("#user-view").append(userPostDiv, likeButton)      
@@ -268,7 +345,9 @@ function followingView(user_id) {
     document.querySelector("#create-post-view").style.display = "none"
     document.querySelector("#app-posts").style.display = "none"
     document.querySelector("#user-view").style.display = "none"
+    document.querySelector("#edit-post-view").style.display = "none"
     document.querySelector("#following-view").style.display = "block"
+    
     
     // Clear view to avoid duplicates
     document.querySelector("#following-view").innerHTML = ""
@@ -284,8 +363,11 @@ function followingView(user_id) {
         return response.json()
     })
     .then(data => {
-        data.forEach(item => {
-
+        if (data.message) {
+            document.querySelector("#following-view").innerHTML = data.message
+        } 
+        data.posts.forEach(item => {
+        
         // Create div for posts
         const postDiv = document.createElement("div");
         postDiv.className = "posts-list"
@@ -316,4 +398,18 @@ function followingView(user_id) {
         })
     })
     .catch(error => alert(`Error: ${error}`))
+}
+
+
+// Auxiliary alert messages function when creating and editing posts
+function alertMessage(message, messageType) {
+    const alertMessage = document.querySelector("#alert-message");
+    alertMessage.className = `alert alert-${messageType}`
+    alertMessage.textContent = message
+    alertMessage.style.display = "block"
+
+    // Hide message after 5 seconds
+    setTimeout(() => {
+        alertMessage.style.display = "none"
+    }, 5000)  
 }

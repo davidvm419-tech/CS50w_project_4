@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 import json
@@ -128,11 +128,18 @@ def following_posts(request, user_id):
     # Get users that the login user is following (flat true returns a flat list of the users ids)
     following_users = Follow.objects.filter(follower=user_id).values_list("following_id", flat=True)
     
+    # Check if user is not following nobody
+    if not following_users:
+        return JsonResponse({
+            "message": "You're not following anyone, yet!",
+            "posts": [],
+        })
+
     # Get posts of the users that the login user is following (django iterates the list of users id's to get each user posts)
     posts = Post.objects.filter(user_id__in=following_users).order_by("-timestamp")
 
     # Return response
-    return JsonResponse([post.serialize(user=request.user) for post in posts], safe=False, status=200)
+    return JsonResponse({"posts": [post.serialize(user=request.user) for post in posts]}, safe=False, status=200)
 
 
 @login_required
@@ -158,20 +165,46 @@ def create_post(request):
 
     post.save()
 
-    # return response of success and the post to update the posts
-    return JsonResponse({
-        "message": "Post published", 
-        "post": post.serialize(user=request.user)}, 
-        status=200)
+    # return response of success
+    return JsonResponse({"message": "Post published"}, status=200)
 
+
+@login_required
+def edit_post(request, post_id):
+    if request.method != "PUT":
+        return JsonResponse({"error": "Wrong method, please use PUT"}, status=400)
+    
+    # Check that user is really the owner of the post
+    post = get_object_or_404(Post, pk=post_id)
+    if request.user != post.user:
+        # Error 403 is the standard fot this errors
+        return JsonResponse({"error": "Not authorized to update this post"}, status=403)
+    
+    # Check valid update
+    try:
+        data = json.loads(request.body)
+    except:
+        return JsonResponse({"error": "Error sending data, JSON data invalid"}, status=400)
+    content = data.get("content", "").strip()
+
+    if content == "":
+        return JsonResponse({"error": "Can't update a post with no content"}, status=400)
+    
+    # Update post content
+    post.content = content
+    post.save()
+
+    # Return response
+    return JsonResponse({"message": "Post updated!"}, status=200)
+    
 
 
 def login_view(request):
     if request.method == "POST":
 
         # Attempt to sign user in
-        username = request.POST["username"]
-        password = request.POST["password"]
+        username = request.POST["username"].strip()
+        password = request.POST["password"].strip()
         user = authenticate(request, username=username, password=password)
 
         # Check if authentication successful
@@ -193,12 +226,12 @@ def logout_view(request):
 
 def register(request):
     if request.method == "POST":
-        username = request.POST["username"]
-        email = request.POST["email"]
+        username = request.POST["username"].strip()
+        email = request.POST["email"].strip()
 
         # Ensure password matches confirmation
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
+        password = request.POST["password"].strip()
+        confirmation = request.POST["confirmation"].strip()
         if password != confirmation:
             return render(request, "network/register.html", {
                 "message": "Passwords must match."

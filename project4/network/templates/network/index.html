@@ -2,12 +2,23 @@
 
 {% block body %}
     {% if user.is_authenticated %}
+        <div id="alert-message" role="alert" style="text-align: center; display: none;">
+        </div>
         <div id="create-post-view">
             <h1>New Post</h1>
             <form id="post-form" method="post">
                 {% csrf_token %}
                 <textarea id="post-text" placeholder="Write your thougths"></textarea>
-                <input id="form-submit" type="submit" value="post!">
+                <input id="form-submit" type="submit" value="Post!">
+            </form>
+        </div>
+
+        <div id="edit-post-view">
+            <h1>Edit Post</h1>
+            <form id="edit-post-form" method="post">
+                {% csrf_token %}
+                <textarea id="edit-text"></textarea>
+                <input id="edit-form-submit" type="submit" value="Save Changes">
             </form>
         </div>
 

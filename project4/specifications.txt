@@ -22,11 +22,11 @@ Any page that displays post should show only 10 posts. To se more  'Next; button
     if the user is not in the first page a 'Previous' button should also appear.
 
 Edit Post
-User who owns a post must be able to Click an 'Edit' button.
-    Content must be replace with a textarea where the content can be edited.
-    'Save' the post without reloading the page.
-    Security to guarantee that only the owner can edit the post
+User who owns a post must be able to Click an 'Edit' button. (Done)
+    Content must be replace with a textarea where the content can be edited. (Done)
+    'Save' the post without reloading the page. (Done)
+    Security to guarantee that only the owner can edit the post. (Done)
 
 Like and Unlike
-Click a button o link to togled a 'like' or 'liked'
-The like count must be updated without requiring to reload the page.
+Click a button o link to togled a 'like' or 'liked'. (Done)
+The like count must be updated without requiring to reload the page. (Done)
