@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -15,16 +16,51 @@ def index(request):
     return render(request, "network/index.html")
 
 def posts(request):
+    # Get all app posts
     posts =Post.objects.all().order_by("-timestamp")
+    
+    # Get 10 posts per page
+    paginator = Paginator(posts, 10)
+
+    # Get page number
+    page_number = request.GET.get("page")
+
+    # Object with the 10 posts of the page
+    page_obj = paginator.get_page(page_number)
+
+    # Pass authenticated user to the serialize method
     if request.user.is_authenticated:
         login_user = request.user.id
         user = request.user
     else:
         login_user = None
         user= None
+
+    # Return valid or invalid next page
+    if page_obj.has_next():
+        next_page = page_obj.next_page_number()
+    else:
+        next_page = None
+
+    # Return valid or invalid previous page
+    if page_obj.has_previous():
+        previous_page = page_obj.previous_page_number()
+    else:
+        previous_page = None
+
+    # Return response
     return JsonResponse({
-        "posts": [post.serialize(user=user) for post in posts],
+        "posts": [post.serialize(user=user) for post in page_obj.object_list],
         "login_user": login_user,
+        # Metadata to handle pagination in frontend
+        "pagination": {
+            "total_pages": paginator.num_pages,
+            "current_page": page_obj.number,
+            "has_previous": page_obj.has_previous(),
+            "has_next": page_obj.has_next(),
+            "next_page": next_page,
+            "previous_page": previous_page,
+        }
         },
         status=200)
 
