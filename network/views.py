@@ -24,8 +24,6 @@ def posts(request):
 
     # Get page number
     page_number = request.GET.get("page")
-
-    # Object with the 10 posts of the page
     page_obj = paginator.get_page(page_number)
 
     # Pass authenticated user to the serialize method
@@ -69,6 +67,25 @@ def user_posts(request, user_id):
     # Get user and user posts
     user_posts = Post.objects.filter(user=user_id).order_by("-timestamp")
 
+    # Get 10 posts per page
+    paginator = Paginator(user_posts, 10)
+
+    # Get page number
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)   
+
+    # Return valid or invalid next page
+    if page_obj.has_next():
+        next_page = page_obj.next_page_number()
+    else:
+        next_page = None
+
+    # Return valid or invalid previous page
+    if page_obj.has_previous():
+        previous_page = page_obj.previous_page_number()
+    else:
+        previous_page = None
+
     # Get user followers and following 
     user_followers = Follow.objects.filter(following=user_id).count() 
     user_following = Follow.objects.filter(follower=user_id).count()
@@ -84,11 +101,20 @@ def user_posts(request, user_id):
 
     # return user posts, followers and login user (for following button) 
     return JsonResponse({
-        "posts": [post.serialize(user=user) for post in user_posts],
+        "posts": [post.serialize(user=user) for post in page_obj.object_list],
         "followers": user_followers,
         "following": user_following,
         "login_user": login_user,
         "is_following": is_following, 
+        # Metadata to handle pagination in frontend
+        "pagination": {
+            "total_pages": paginator.num_pages,
+            "current_page": page_obj.number,
+            "has_previous": page_obj.has_previous(),
+            "has_next": page_obj.has_next(),
+            "next_page": next_page,
+            "previous_page": previous_page,
+        }
         },
         status=200)
 
@@ -168,14 +194,43 @@ def following_posts(request, user_id):
     if not following_users:
         return JsonResponse({
             "message": "You're not following anyone, yet!",
-            "posts": [],
         })
-
+    
     # Get posts of the users that the login user is following (django iterates the list of users id's to get each user posts)
     posts = Post.objects.filter(user_id__in=following_users).order_by("-timestamp")
 
+    # Get 10 posts per page
+    paginator = Paginator(posts, 10)
+
+    # Get page number
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)   
+
+    # Return valid or invalid next page
+    if page_obj.has_next():
+        next_page = page_obj.next_page_number()
+    else:
+        next_page = None
+
+    # Return valid or invalid previous page
+    if page_obj.has_previous():
+        previous_page = page_obj.previous_page_number()
+    else:
+        previous_page = None
     # Return response
-    return JsonResponse({"posts": [post.serialize(user=request.user) for post in posts]}, safe=False, status=200)
+    return JsonResponse(
+        {"posts": [post.serialize(user=request.user) for post in page_obj.object_list],
+        # Metadata to handle pagination in frontend
+        "pagination": {
+            "total_pages": paginator.num_pages,
+            "current_page": page_obj.number,
+            "has_previous": page_obj.has_previous(),
+            "has_next": page_obj.has_next(),
+            "next_page": next_page,
+            "previous_page": previous_page,
+        }
+        }, 
+        safe=False, status=200)
 
 
 @login_required

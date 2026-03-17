@@ -59,6 +59,7 @@ function editPost(post_id, post_content) {
     document.querySelector("#app-posts").style.display = "none"
     document.querySelector("#user-view").style.display = "none"
     document.querySelector("#following-view").style.display = "none"
+    document.querySelector("#pagination-container").style.display = "none"
     document.querySelector("#edit-post-view").style.display = "block"
 
     // Render post data in the form
@@ -97,6 +98,7 @@ function handleEditSubmit(e, post_id) {
         document.querySelector("#edit-post-view").style.display = "none"
         document.querySelector("#create-post-view").style.display = "block"
         document.querySelector("#app-posts").style.display = "block"
+        document.querySelector("#pagination-container").style.display = "block"
         loadPosts()
 
         if (result.error) {
@@ -112,8 +114,11 @@ function loadPosts() {
     // Clear view to avoid duplicates
     document.querySelector("#app-posts").innerHTML = ""
 
-    // Fetch database for all posts
-    fetch("/network/posts")
+    // Get page from url updated by pagination function, default 1
+    const page = new URLSearchParams(window.location.search).get("page") || 1;
+
+    // Fetch database for all posts and current page pass from pagination function
+    fetch(`/network/posts?page=${page}`)
     .then(response => {
         // Check for error in response
         if (!response.ok) {
@@ -124,6 +129,15 @@ function loadPosts() {
     .then(data => {
         // Pass login user
         const loginUser = data.login_user;
+
+        // Hide page container if there's not previous and next pages
+        if (!data.pagination.has_previous && !data.pagination.has_next) {
+            document.querySelector("#pagination-container").style.display = "none"
+        } else {
+            // Pass pagination data and the function to execute
+            pagination(data.pagination, loadPosts)
+        }
+
         data.posts.forEach(item => {
 
             // Create div for post
@@ -191,8 +205,11 @@ function userProfile(user_id) {
     // Clear view to avoid duplicates
     document.querySelector("#user-view").innerHTML = ""
 
+    // Get page from url updated by pagination function, default 1
+    const page = new URLSearchParams(window.location.search).get("page") || 1;    
+
     // Fetch user poosts
-    fetch(`/network/${user_id}`)
+    fetch(`/network/${user_id}?page=${page}`)
 
     // Check for error in response
     .then(response => {
@@ -240,6 +257,14 @@ function userProfile(user_id) {
             else {
                 followButton.onclick = () => followHandle(userProfileId, data.is_following)
             }
+        }
+
+        // Hide page container if there's not previous and next pages
+        if (!data.pagination.has_previous && !data.pagination.has_next) {
+            document.querySelector("#pagination-container").style.display = "none"
+        } else {
+            // Pass pagination data and the function to execute
+            pagination(data.pagination, () => userProfile(userProfileId))
         }
 
         // Render user posts
@@ -352,8 +377,11 @@ function followingView(user_id) {
     // Clear view to avoid duplicates
     document.querySelector("#following-view").innerHTML = ""
 
+    // Get page from url updated by pagination function, default 1
+    const page = new URLSearchParams(window.location.search).get("page") || 1;
+
     // Fetch user id
-    fetch(`/network/following/${user_id}`)
+    fetch(`/network/following/${user_id}?page=${page}`)
 
     // Check for error in response
     .then(response => {
@@ -363,9 +391,25 @@ function followingView(user_id) {
         return response.json()
     })
     .then(data => {
+        // User friendly message if isn't following anyone
         if (data.message) {
-            document.querySelector("#following-view").innerHTML = data.message
+            document.querySelector("#pagination-container").style.display = "none"
+            const container = document.querySelector("#following-view")
+            const messageContainer = document.createElement("h1")
+            messageContainer.textContent = data.message
+            container.append(messageContainer)
+            // Code stops here because there are not posts to render
+            return;
         } 
+
+        // Hide page container if there's not previous and next pages
+        if (!data.pagination.has_previous && !data.pagination.has_next) {
+            document.querySelector("#pagination-container").style.display = "none"
+        } else {
+            // Pass pagination data and the function to execute
+            pagination(data.pagination, () => followingView(user_id))
+        }
+
         data.posts.forEach(item => {
         
         // Create div for posts
@@ -412,4 +456,42 @@ function alertMessage(message, messageType) {
     setTimeout(() => {
         alertMessage.style.display = "none"
     }, 5000)  
+}
+
+
+// Auxiliary function to handle pagination
+function pagination(paginationData, viewCall) {
+    const previousPage = document.querySelector("#page-item-previous");
+    const previousLink = document.querySelector("#page-link-previous"); 
+    const nextPage = document.querySelector("#page-item-next"); 
+    const nextLink = document.querySelector("#page-link-next");  
+
+    // Disable previous button if there is no previous page
+    if (!paginationData.has_previous) {
+        previousPage.classList.add("disabled")
+        previousLink.setAttribute("aria-disabled", "true")
+    } else {
+        previousPage.classList.remove("disabled")
+        previousLink.onclick = () => {
+            // call push method to send the correct page on the fetch
+            history.pushState({}, "", `?page=${paginationData.previous_page}`)  
+            // Calls the function passed
+            viewCall()
+        }
+    }
+
+    // Disable next button if there is not next page
+    if (!paginationData.has_next) {
+        nextPage.classList.add("disabled")
+        nextLink.setAttribute("aria-disabled", "true")
+    } else {
+        nextPage.classList.remove("disabled")
+        nextLink.onclick = () => {
+            // call push method to send the correct page on the fetch
+            history.pushState({}, "", `?page=${paginationData.next_page}`)
+            // Calls the function passed
+            viewCall()
+        }
+    }
+
 }

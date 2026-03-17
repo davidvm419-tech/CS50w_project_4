@@ -18,8 +18,8 @@ Take the user to a page where they see all posts made by the users he/she follow
     Avaliable only to signed in users. (Done)
 
 Pagination
-Any page that displays post should show only 10 posts. To se more  'Next; button should appear.
-    if the user is not in the first page a 'Previous' button should also appear.
+Any page that displays post should show only 10 posts. To se more  'Next; button should appear. (Done)
+    if the user is not in the first page a 'Previous' button should also appear. (Done)
 
 Edit Post
 User who owns a post must be able to Click an 'Edit' button. (Done)

@@ -1,0 +1,66 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+        <div id="alert-message" role="alert" style="text-align: center; display: none;">
+        </div>
+        <div id="create-post-view">
+            <h1>New Post</h1>
+            <form id="post-form" method="post">
+                {% csrf_token %}
+                <textarea id="post-text" placeholder="Write your thougths"></textarea>
+                <input id="form-submit" type="submit" value="Post!">
+            </form>
+        </div>
+
+        <div id="edit-post-view">
+            <h1>Edit Post</h1>
+            <form id="edit-post-form" method="post">
+                {% csrf_token %}
+                <textarea id="edit-text"></textarea>
+                <input id="edit-form-submit" type="submit" value="Save Changes">
+            </form>
+        </div>
+
+        <div id="app-posts">
+        </div>
+
+        <div id="user-view">
+        </div>
+
+        <div id="following-view">
+        </div>
+
+        <div id="pagination-container">
+            <nav aria-label="Page-navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" id="page-item-previous">
+                    <a class="page-link" id="page-link-previous" href="#" tabindex="-1" aria-disabled="">Previous</a>
+                </li>
+                <li class="page-item" id="page-item-next">
+                    <a class="page-link" id="page-link-next" href="#" aria-disabled="">Next</a>
+                </li>
+            </ul>
+            </nav>
+        </div>
+    {% else %}
+        <div id="app-posts">
+        </div>
+
+        <div id="user-view">
+        </div>
+
+        <div id="pagination-container">
+            <nav aria-label="Page-navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" id="page-item-previous">
+                    <a class="page-link" id="page-link-previous" href="#" tabindex="-1" aria-disabled="">Previous</a>
+                </li>
+                <li class="page-item" id="page-item-next">
+                    <a class="page-link" id="page-link-next" href="#" aria-disabled="">Next</a>
+                </li>
+            </ul>
+            </nav>
+        </div>
+    {% endif %}
+{% endblock %}
