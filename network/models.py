@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -12,12 +13,14 @@ class Post(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def serialize(self, user=None):
+        # Change timestamp to local time zone
+        local_time = timezone.localtime(self.timestamp)
         return {
             "id": self.id,
             "user_id": self.user.id,
             "user": self.user.username,
             "content": self.content,
-            "timestamp": self.timestamp.strftime("posted at: %d-%m-%Y"),
+            "timestamp": local_time.strftime("posted: %d-%m-%Y at %H:%M"),
             "likes": self.likes.count(),
             "is_liked": self.likes.filter(user=user).exists() if user else False   
         }

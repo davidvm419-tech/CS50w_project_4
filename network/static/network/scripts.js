@@ -7,9 +7,9 @@ document.addEventListener("DOMContentLoaded", function() {
     if (postView) {
         // SP views load
         postView.addEventListener("click", createPost)   
-        document.querySelector("#user-view").style.display = "none"
-        document.querySelector("#following-view").style.display = "none"
-        document.querySelector("#edit-post-view").style.display = "none"
+        document.querySelector("#user-view").classList.add("hidden")
+        document.querySelector("#following-view").classList.add("hidden")
+        document.querySelector("#edit-post-view").classList.add("hidden")
     }
 
     // Load posts (avoid error when log out)
@@ -42,7 +42,7 @@ function createPost(e) {
     // Clear the content post
     document.querySelector("#post-text").value = ""
     // Load all posts view and show alert message
-    document.querySelector("#app-posts").style.display = "block"
+    document.querySelector("#app-posts").classList.remove("hidden")
     loadPosts()
     if (result.error) {
         alertMessage(result.error, "warning")
@@ -55,15 +55,18 @@ function createPost(e) {
 
 function editPost(post_id, post_content) {
     // Show edit view and hide the others
-    document.querySelector("#create-post-view").style.display = "none"
-    document.querySelector("#app-posts").style.display = "none"
-    document.querySelector("#user-view").style.display = "none"
-    document.querySelector("#following-view").style.display = "none"
+    document.querySelector("#create-post-view").classList.add("hidden")
+    document.querySelector("#app-posts").classList.add("hidden")
+    document.querySelector("#user-view").classList.add("hidden")
+    document.querySelector("#following-view").classList.add("hidden")
     document.querySelector("#pagination-container").style.display = "none"
-    document.querySelector("#edit-post-view").style.display = "block"
+    document.querySelector("#edit-post-view").classList.remove("hidden")
 
     // Render post data in the form
     document.querySelector("#edit-text").value = post_content
+
+    // Focus on textarea 
+    document.querySelector("#edit-text").focus();
     
     // Handle button submit 
     const editSubmit = document.querySelector("#edit-form-submit")
@@ -94,10 +97,10 @@ function handleEditSubmit(e, post_id) {
     // Get response and display message
     .then(response => response.json())
     .then(result => {
-        // Load all posts view and show alet message
-        document.querySelector("#edit-post-view").style.display = "none"
-        document.querySelector("#create-post-view").style.display = "block"
-        document.querySelector("#app-posts").style.display = "block"
+        // Load all posts view and show alert message
+        document.querySelector("#edit-post-view").classList.add("hidden")
+        document.querySelector("#create-post-view").classList.remove("hidden")
+        document.querySelector("#app-posts").classList.remove("hidden")
         document.querySelector("#pagination-container").style.display = "block"
         loadPosts()
 
@@ -112,7 +115,11 @@ function handleEditSubmit(e, post_id) {
 
 function loadPosts() {
     // Clear view to avoid duplicates
-    document.querySelector("#app-posts").innerHTML = ""
+    const postsContainer = document.querySelector("#app-posts");
+    postsContainer.classList.remove("hidden");
+    postsContainer.replaceChildren();
+
+
 
     // Get page from url updated by pagination function, default 1
     const page = new URLSearchParams(window.location.search).get("page") || 1;
@@ -144,34 +151,39 @@ function loadPosts() {
             const postDiv = document.createElement("div");
             postDiv.className = "posts-list"
             // Create elements to the div
-            const user = document.createElement("h2");
+            const user = document.createElement("h3");
             user.textContent = item.user
             const content = document.createElement("p");
             content.textContent = item.content
             const timestamp = document.createElement("small");
             timestamp.textContent = item.timestamp
-            const heading = document.createElement("h1");
+            const heading = document.createElement("h5");
             heading.textContent = "Post:"
             const likesNum = document.createElement("p");
             // Set id with item id allows to see the update without reloading the page on every view
             likesNum.id = `likes-num-allposts-${item.id}`
             likesNum.textContent = `Likes ${item.likes}`
             const likeButton = document.createElement("button");
-            likeButton.id = `like-btn-allposts-${item.id}   `
-            postDiv.append(user, heading, content, timestamp, likesNum)
+            likeButton.id = `like-btn-allposts-${item.id}`
+            likeButton.className = "like-btn"
+            postDiv.append(user, timestamp, heading, content, likesNum)
 
             // Avoid user who owns the post to have the like button and have the edit button
             if (loginUser === item.user_id) {
                 const editButton = document.createElement("button");
                 editButton.id = `edit-btn-allPosts-${item.id}` 
-                editButton.textContent = "Edit Post" 
-                document.querySelector("#app-posts").append(postDiv, editButton)
+                editButton.textContent = "Edit Post"
+                editButton.className = "edit-btn" 
+                postDiv.prepend(editButton)
+                document.querySelector("#app-posts").append(postDiv)
 
                 // Handle edit button
                 editButton.onclick = () => editPost(item.id, item.content)       
             } else {
                 likeButton.textContent = item.is_liked ? "Unlike" : "Like"
-                document.querySelector("#app-posts").append(postDiv, likeButton)
+                likeButton.className = item.is_liked ? "like-btn liked" : "like-btn"
+                postDiv.append(likeButton)
+                document.querySelector("#app-posts").append(postDiv)
             }
             
             // Send to user profile
@@ -192,18 +204,22 @@ function loadPosts() {
 
 
 function userProfile(user_id) {
+    // Clear view to avoid duplicates
+    document.querySelector("#user-view").innerHTML = `
+    <div id="user-information"></div>
+    <div id="user-posts"></div>`
+
+
+
     // Show user view
     const postView = document.querySelector("#create-post-view");
     if (postView) {
-        postView.style.display = "none"
-        document.querySelector("#following-view").style.display = "none"
-        document.querySelector("#edit-post-view").style.display = "none"
+        postView.classList.add("hidden")
+        document.querySelector("#following-view").classList.add("hidden")
+        document.querySelector("#edit-post-view").classList.add("hidden")
     }
-    document.querySelector("#app-posts").style.display = "none"
-    document.querySelector("#user-view").style.display = "block"
-
-    // Clear view to avoid duplicates
-    document.querySelector("#user-view").innerHTML = ""
+    document.querySelector("#app-posts").classList.add("hidden")
+    document.querySelector("#user-view").classList.remove("hidden")
 
     // Get page from url updated by pagination function, default 1
     const page = new URLSearchParams(window.location.search).get("page") || 1;    
@@ -224,9 +240,8 @@ function userProfile(user_id) {
         const userProfileId = data.posts.length > 0 ? data.posts[0].user_id : user_id;
 
         // Render username, user followers and the users is following
-        const userInfoDiv = document.createElement("div")
-        
-        
+        const userInfoDiv = document.querySelector("#user-information");
+
         // Create elements to the div
         userInfoDiv.className = "user-information"
         const user = document.createElement("h2");
@@ -242,13 +257,13 @@ function userProfile(user_id) {
 
         // Check for display follow button
 
-        if (loginUser === userProfileId) {
-            document.querySelector("#user-view").append(userInfoDiv)
-        } else {
+        if (loginUser !== userProfileId) {
             const followButton = document.createElement("button");
             followButton.id = "follow-btn"
+            followButton.className = "follow-btn"
             followButton.textContent = data.is_following ? "Unfollow" : "Follow"
-            document.querySelector("#user-view").append(userInfoDiv, followButton)
+            followButton.className = data.is_following ? "follow-btn-following" : "follow-btn"
+            userInfoDiv.append(followButton)
 
             // Send user to login or update the follow status
             if (data.login_user === null) {
@@ -269,35 +284,41 @@ function userProfile(user_id) {
 
         // Render user posts
         data.posts.forEach(item => {
-            const userPostDiv = document.createElement("div");
-            userPostDiv.className = "posts-list"
+            // Crate div for post   
+            const postDiv = document.createElement("div");
+            postDiv.className = "posts-list"
 
             // Create elements to the div
             const content = document.createElement("p");
             content.textContent = item.content
             const timestamp = document.createElement("small");
             timestamp.textContent = item.timestamp
-            const heading = document.createElement("h1");
+            const heading = document.createElement("h5");
             heading.textContent = "Post:"
             const likesNum = document.createElement("p");
             likesNum.id = `likes-num-user${item.id}`
             likesNum.textContent = `Likes ${item.likes}`
             const likeButton = document.createElement("button");
             likeButton.id = `like-btn-user ${item.id}`
-            userPostDiv.append(heading, content, timestamp, likesNum)
+            likeButton.className = "like-btn"   
+            postDiv.append(timestamp, heading, content, likesNum)
 
             // Avoid user who owns the post to have the like button and have the edit button    
             if (loginUser === userProfileId) {
                 const editButton = document.createElement("button");
                 editButton.id = `edit-btn-userProfile-${item.id}`
                 editButton.textContent = "Edit Post"
-                document.querySelector("#user-view").append(userPostDiv, editButton)
+                editButton.className = "edit-btn"
+                postDiv.prepend(editButton)
+                document.querySelector("#user-posts").append(postDiv)
                 
                 // Handle edit button
                 editButton.onclick = () => editPost(item.id, item.content)
             } else {
                 likeButton.textContent = item.is_liked ? "Unlike" : "Like"
-                document.querySelector("#user-view").append(userPostDiv, likeButton)      
+                likeButton.className = item.is_liked ? "like-btn liked" : "like-btn"
+                postDiv.append(likeButton)
+                document.querySelector("#user-posts").append(postDiv)      
             }
             
             // Send user to login or update the like
@@ -332,6 +353,7 @@ function followHandle(user_id, follow_status) {
         // Update follow button
         const button = document.querySelector("#follow-btn");
         button.textContent = data.is_following ? "Unfollow" : "Follow"
+        button.className = data.is_following ? "follow-btn-following" : "follow-btn"
 
         // Update button handling
         button.onclick = () => followHandle(user_id, data.is_following)
@@ -358,6 +380,7 @@ function likeHandle(post_id, like_status, likesNum, button) {
         
         // Update like button
         button.textContent = data.is_liked ? "Unlike" : "Like"
+        button.className = data.is_liked ? "like-btn liked" : "like-btn"
 
         // Update button handling     
         button.onclick = () => likeHandle(post_id, data.is_liked, likesNum, button)    
@@ -366,17 +389,16 @@ function likeHandle(post_id, like_status, likesNum, button) {
 
 
 function followingView(user_id) {
-    // show following view
-    document.querySelector("#create-post-view").style.display = "none"
-    document.querySelector("#app-posts").style.display = "none"
-    document.querySelector("#user-view").style.display = "none"
-    document.querySelector("#edit-post-view").style.display = "none"
-    document.querySelector("#following-view").style.display = "block"
-    
-    
     // Clear view to avoid duplicates
-    document.querySelector("#following-view").innerHTML = ""
+    document.querySelector("#following-view").innerHTML = `<div id="following-posts"></div>`
 
+    // show following view
+    document.querySelector("#create-post-view").classList.add("hidden")
+    document.querySelector("#app-posts").classList.add("hidden")
+    document.querySelector("#user-view").classList.add("hidden")
+    document.querySelector("#edit-post-view").classList.add("hidden")
+    document.querySelector("#following-view").classList.remove("hidden")
+    
     // Get page from url updated by pagination function, default 1
     const page = new URLSearchParams(window.location.search).get("page") || 1;
 
@@ -394,7 +416,7 @@ function followingView(user_id) {
         // User friendly message if isn't following anyone
         if (data.message) {
             document.querySelector("#pagination-container").style.display = "none"
-            const container = document.querySelector("#following-view")
+            const container = document.querySelector("#following-posts")
             const messageContainer = document.createElement("h1")
             messageContainer.textContent = data.message
             container.append(messageContainer)
@@ -417,7 +439,7 @@ function followingView(user_id) {
         postDiv.className = "posts-list"
 
         // Create elements to the div
-        const user = document.createElement("h2");
+        const user = document.createElement("h3");
         user.textContent = item.user
         const content = document.createElement("p");
         content.textContent = item.content
@@ -425,14 +447,16 @@ function followingView(user_id) {
         timestamp.textContent = item.timestamp
         const likeButton = document.createElement("button");
         likeButton.id = `like-btn-following-${item.id}`
+        likeButton.className = "like-btn"
         likeButton.textContent = item.is_liked ? "Unlike" : "Like"
-        const heading = document.createElement("h1");
+        likeButton.className = item.is_liked ? "like-btn liked" : "like-btn"
+        const heading = document.createElement("h5");
         heading.textContent = "Post:"
         const likesNum = document.createElement("p");
         likesNum.id = `likes-num-following-${item.id}`
         likesNum.textContent = `Likes ${item.likes}`
-        postDiv.append(user, heading, content, timestamp, likesNum, likeButton)
-        document.querySelector("#following-view").append(postDiv)
+        postDiv.append(user, timestamp, heading, content, likesNum, likeButton)
+        document.querySelector("#following-posts").append(postDiv) 
         
         // Send to user profile
         user.onclick = () => userProfile(item.user_id)

@@ -8,7 +8,7 @@
             <h1>New Post</h1>
             <form id="post-form" method="post">
                 {% csrf_token %}
-                <textarea id="post-text" placeholder="Write your thougths"></textarea>
+                <textarea id="post-text" placeholder="Write your thoughts"></textarea>
                 <input id="form-submit" type="submit" value="Post!">
             </form>
         </div>
@@ -26,9 +26,15 @@
         </div>
 
         <div id="user-view">
+            <div id="user-information">
+            </div>
+            <div id="user-posts">
+            </div>
         </div>
 
         <div id="following-view">
+            <div id="following-posts">
+            </div>
         </div>
 
         <div id="pagination-container">
@@ -48,6 +54,10 @@
         </div>
 
         <div id="user-view">
+            <div id="user-information">
+            </div>
+            <div id="user-posts">
+            </div>
         </div>
 
         <div id="pagination-container">
