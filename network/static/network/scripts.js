@@ -142,6 +142,7 @@ function loadPosts() {
             document.querySelector("#pagination-container").style.display = "none"
         } else {
             // Pass pagination data and the function to execute
+            document.querySelector("#pagination-container").style.display = "block" 
             pagination(data.pagination, loadPosts)
         }
 
@@ -279,6 +280,7 @@ function userProfile(user_id) {
             document.querySelector("#pagination-container").style.display = "none"
         } else {
             // Pass pagination data and the function to execute
+            document.querySelector("#pagination-container").style.display = "block"
             pagination(data.pagination, () => userProfile(userProfileId))
         }
 
@@ -429,6 +431,7 @@ function followingView(user_id) {
             document.querySelector("#pagination-container").style.display = "none"
         } else {
             // Pass pagination data and the function to execute
+            document.querySelector("#pagination-container").style.display = "block"
             pagination(data.pagination, () => followingView(user_id))
         }
 
